@@ -1,0 +1,31 @@
+🧩 Model 1 – Object Detection (YOLOv8)
+
+Detects vehicles, pedestrians, and obstacles in road scenes.
+This model can later be trained for manhole or construction detection.
+
+======================================
+🧩 MODEL 1 – OBJECT DETECTION
+======================================
+!pip install ultralytics opencv-python-headless -q
+
+from ultralytics import YOLO
+import cv2
+import matplotlib.pyplot as plt
+
+# Load YOLOv8 pretrained model
+model = YOLO("yolov8n.pt")
+
+# Download a sample road image
+!wget -q https://ultralytics.com/images/bus.jpg -O road.jpg
+
+# Run object detection
+results = model("road.jpg")
+
+# Display detections
+annotated = results[0].plot()
+plt.imshow(cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB))
+plt.axis("off")
+plt.title("Model 1: Object Detection on Road Scene")
+plt.show()
+
+print("✅ Model 1 Complete: Detected vehicles, obstacles, and road features.")
