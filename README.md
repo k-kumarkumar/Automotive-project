@@ -2,8 +2,8 @@
 Object detection
 
 project title:-
-     Smart Ambulance System 🚑
-using Object Detection and Shortest           Route Optimization 
+          Smart Ambulance System 🚑
+using Object Detection and Shortest Route Optimization 
 
 The system is divided into five major models, each handling a specific task:
 
