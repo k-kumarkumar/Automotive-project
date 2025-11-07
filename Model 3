@@ -1,0 +1,21 @@
+======================================
+ ⚠️ ⚡ MODEL 3 – HAZARD DETECTION
+======================================
+import random
+
+# Simulated YOLO hazard detection (replace with real model later)
+hazards = ["None", "Manhole", "Construction Area"]
+detected_hazard = random.choice(hazards)
+
+# Known hazard-prone areas in Kurnool
+risk_zones = {
+    "Manhole - Near C Camp": (15.8302, 78.0399),
+    "Construction - Near APSRTC Depot": (15.8355, 78.0432)
+}
+
+print("🕳️ Detected Hazard:", detected_hazard)
+print("⚠️ Known Hazard Zones in Kurnool:")
+for name, coord in risk_zones.items():
+    print(f" - {name}: {coord}")
+
+print("\n✅ Model 3 Complete: Hazard detection and mapping completed.")
