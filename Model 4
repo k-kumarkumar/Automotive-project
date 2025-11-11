@@ -1,0 +1,32 @@
+======================================
+🚦 MODEL 4 – SHORTEST & SAFEST ROUTE FINDER
+======================================
+
+min_distance = float('inf')
+nearest_hospital = None
+unsafe_hospital = None
+
+# Compute distances and apply hazard penalties
+for name, coord in hospitals.items():
+    dist = haversine(ambulance_location, coord)
+    safe_distance = dist
+    for hazard_name, hazard_loc in risk_zones.items():
+        hazard_dist = haversine(coord, hazard_loc)
+        if hazard_dist < 0.6:  # risky zone within 600m
+            safe_distance += 1.5  # add penalty for risk
+            unsafe_hospital = name
+    if safe_distance < min_distance:
+        min_distance = safe_distance
+        nearest_hospital = name
+
+# Estimate time assuming 40 km/h
+eta = (min_distance / 40) * 60  
+
+print(f"🏥 Safest Hospital Selected: {nearest_hospital}")
+print(f"📏 Safe Distance: {min_distance:.2f} km")
+print(f"⏱️ Estimated Time: {eta:.2f} minutes")
+
+if unsafe_hospital:
+    print(f"⚠️ Route near {unsafe_hospital} avoided due to hazard zones.")
+
+print("\n✅ Model 4 Complete: Route optimization finished successfully.")
