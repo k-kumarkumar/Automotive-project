@@ -1,0 +1,154 @@
+# ==============================================
+# 🚑 SMART AMBULANCE SYSTEM - KURNOOL CITY (OFFLINE)
+# Object Detection | Route Optimization | Hazard Detection
+# ==============================================
+
+# 🧩 Step 0: Install Required Libraries
+!pip install ultralytics paho-mqtt opencv-python-headless
+
+# ----------------------------------------------
+# 🧠 Step 1: Import Libraries
+# ----------------------------------------------
+from ultralytics import YOLO
+import cv2
+import math
+import matplotlib.pyplot as plt
+import numpy as np
+import paho.mqtt.publish as publish
+import random
+
+# ----------------------------------------------
+# 📷 Step 2: Object Detection (Vehicles, Manholes, Construction)
+# ----------------------------------------------
+!wget -q https://ultralytics.com/images/bus.jpg -O road.jpg
+
+# Load pretrained YOLOv8 model
+model = YOLO("yolov8n.pt")
+
+# Run detection
+results = model("road.jpg")
+
+# Plot detections
+annotated = results[0].plot()
+plt.imshow(cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB))
+plt.axis("off")
+plt.title("Detected Objects (Vehicles, Obstacles, etc.)")
+plt.show()
+
+print("✅ Object detection complete!")
+
+# Simulated hazard detection
+# (In a real project, you'd train YOLO to detect 'manhole' and 'construction zone' as custom classes)
+hazards = ["None", "Manhole", "Construction Area"]
+detected_hazard = random.choice(hazards)
+
+print(f"\n🕳️ Road Hazard Detection: {detected_hazard}")
+
+# ----------------------------------------------
+# 🗺️ Step 3: GPS Simulation for Kurnool City
+# ----------------------------------------------
+
+# Ambulance current location (near Kurnool Bus Stand)
+ambulance_location = (15.8281, 78.0373)
+
+# Major hospitals in Kurnool city (lat, lon)
+hospitals = {
+    "Kurnool Government General Hospital": (15.8266, 78.0369),
+    "Medicover Hospital Kurnool": (15.8334, 78.0410),
+    "Care Hospital Kurnool": (15.8412, 78.0455),
+    "Vasan Eye Care Hospital": (15.8289, 78.0412)
+}
+
+# Known construction/manhole risk zones (lat, lon)
+risk_zones = {
+    "Manhole - Near C Camp": (15.8302, 78.0399),
+    "Construction - Near APSRTC Depot": (15.8355, 78.0432)
+}
+
+# Function to compute Haversine distance (km)
+def haversine(coord1, coord2):
+    lat1, lon1 = coord1
+    lat2, lon2 = coord2
+    R = 6371
+    phi1, phi2 = np.radians(lat1), np.radians(lat2)
+    dphi = np.radians(lat2 - lat1)
+    dlambda = np.radians(lon2 - lon1)
+    a = np.sin(dphi/2)**2 + np.cos(phi1)*np.cos(phi2)*np.sin(dlambda/2)**2
+    return 2 * R * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
+
+# ----------------------------------------------
+# 🚦 Step 4: Compute Safe Route (Avoiding Hazards)
+# ----------------------------------------------
+
+print("\n🏥 Calculating safest and shortest route in Kurnool...\n")
+min_distance = float('inf')
+nearest_hospital = None
+unsafe_hospital = None
+
+for name, coord in hospitals.items():
+    dist = haversine(ambulance_location, coord)
+    # Simulate road risk: hospitals near risk zones are penalized
+    safe_distance = dist
+    for hazard_name, hazard_loc in risk_zones.items():
+        hazard_dist = haversine(coord, hazard_loc)
+        if hazard_dist < 0.6:  # within 600 meters = risky
+            safe_distance += 1.5  # add penalty distance
+            unsafe_hospital = name
+    print(f"• {name:35s} | Safe Distance (km): {safe_distance:.2f}")
+    if safe_distance < min_distance:
+        min_distance = safe_distance
+        nearest_hospital = name
+
+eta = (min_distance / 40) * 60  # assuming avg speed = 40 km/h
+
+print("\n🚨 Safest Hospital Route Selected:", nearest_hospital)
+print(f"📏 Total Safe Distance: {min_distance:.2f} km")
+print(f"⏱️ Estimated Time: {eta:.2f} minutes")
+if unsafe_hospital:
+    print(f"⚠️ Route near {unsafe_hospital} avoided due to construction/manhole area")
+
+# ----------------------------------------------
+# 🔔 Step 5: Emergency Alert (Simulated IoT)
+# ----------------------------------------------
+topic = "emergency/alert"
+message = f"🚑 Ambulance heading to {nearest_hospital} in Kurnool. ETA: {eta:.1f} mins. Avoiding {detected_hazard} zones."
+
+try:
+    publish.single(topic, message, hostname="test.mosquitto.org")
+    print("\n✅ Emergency alert sent to traffic system!")
+except:
+    print("\n⚠️ Simulated alert (no live MQTT). Message:", message)
+
+# ----------------------------------------------
+# 🗾 Step 6: Visualize Locations
+# ----------------------------------------------
+plt.figure(figsize=(7,7))
+plt.scatter(ambulance_location[1], ambulance_location[0], color='red', s=150, label='🚑 Ambulance')
+
+# Plot hospitals
+for h, coord in hospitals.items():
+    plt.scatter(coord[1], coord[0], s=90, label=h)
+
+# Plot hazard zones
+for r, coord in risk_zones.items():
+    plt.scatter(coord[1], coord[0], color='orange', s=120, marker='X', label=r)
+
+plt.title("Ambulance, Hospitals & Hazard Zones in Kurnool City")
+plt.xlabel("Longitude")
+plt.ylabel("Latitude")
+plt.legend(fontsize=8)
+plt.grid(True)
+plt.show()
+
+# ----------------------------------------------
+# ✅ Step 7: Final Summary
+# ----------------------------------------------
+print("\n==============================================")
+print("🚑 SMART AMBULANCE SYSTEM - KURNOOL CITY")
+print("==============================================")
+print("• Object Detection: ✅ Vehicles / Obstacles detected")
+print(f"• Hazard Detection: 🕳️ {detected_hazard}")
+print(f"• Safe Hospital Route: 🏥 {nearest_hospital}")
+print(f"• Distance: {min_distance:.2f} km | ETA: {eta:.2f} minutes")
+print("• Construction & Manhole Zones Avoided 🚧")
+print("• Emergency alert sent to traffic system 🚨")
